@@ -2,7 +2,7 @@ package com.weg.library.model;
 
 import java.time.LocalDate;
 import java.util.List;
-    
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -30,4 +30,10 @@ public class Autor {
 
     @ManyToMany(mappedBy = "autores")
     private List<Livro> livros;
+
+    public Autor(String nome, String nacionalidade, LocalDate dataNascimento) {
+        this.nome = nome;
+        this.nacionalidade = nacionalidade;
+        this.dataNascimento = dataNascimento;
+    }
 }

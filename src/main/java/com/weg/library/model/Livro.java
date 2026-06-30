@@ -38,4 +38,13 @@ public class Livro {
     )
 
     private List<Autor> autores;
+
+    public Livro(String titulo, String isbn, BigDecimal preco, LocalDate dataPublicacao, String categoria, Editora editora) {
+        this.titulo = titulo;
+        this.isbn = isbn;
+        this.preco = preco;
+        this.dataPublicacao = dataPublicacao;
+        this.categoria = categoria;
+        this.editora = editora;
+    }
 }

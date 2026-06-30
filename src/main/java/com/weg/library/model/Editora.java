@@ -30,4 +30,11 @@ public class Editora {
 
     @OneToMany(mappedBy = "editora")
     private List<Livro> livros;
+
+    public Editora(String nome, String cnpj, String email, Long telefone) {
+        this.nome = nome;
+        this.cnpj = cnpj;
+        this.email = email;
+        this.telefone = telefone;
+    }
 }
