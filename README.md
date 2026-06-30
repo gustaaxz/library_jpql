@@ -1,16 +1,16 @@
-# Gestão de Biblioteca (Library Management API)
+# Library Management API
 
-📄 **Documento de Contexto:**
+📄 **System Context Document:**
 
 <object data="./Contexto%20do%20Sistema_%20Gest%C3%A3o%20de%20Biblioteca.pdf" type="application/pdf" width="100%" height="600px">
-    <p>Seu navegador não suporta a exibição direta de PDFs. Você pode <a href="./Contexto%20do%20Sistema_%20Gest%C3%A3o%20de%20Biblioteca.pdf">visualizar ou baixar o PDF diretamente aqui</a>.</p>
+    <p>Your browser does not support viewing PDFs directly. You can <a href="./Contexto%20do%20Sistema_%20Gest%C3%A3o%20de%20Biblioteca.pdf">view or download the PDF directly here</a>.</p>
 </object>
 
-Este é um projeto de API para gerenciamento de biblioteca desenvolvido com **Java 21**, **Spring Boot** e **Spring Data JPA**, utilizando **MySQL** como banco de dados.
+This is a library management API project developed with **Java 21**, **Spring Boot**, and **Spring Data JPA**, using **MySQL** as the database.
 
 ---
 
-## 🚀 Tecnologias Utilizadas
+## 🚀 Technologies Used
 
 - **Java 21**
 - **Spring Boot**
@@ -18,85 +18,85 @@ Este é um projeto de API para gerenciamento de biblioteca desenvolvido com **Ja
   - Spring Data JPA
   - Spring Boot DevTools
 - **MySQL** (Driver: `mysql-connector-j`)
-- **Lombok** (para redução de código boilerplate)
-- **Maven** (Gerenciador de dependências)
+- **Lombok** (for boilerplate code reduction)
+- **Maven** (Dependency manager)
 
 ---
 
-## 🛠️ Configuração do Ambiente
+## 🛠️ Environment Setup
 
-### 1. Banco de Dados (MySQL)
-Certifique-se de ter uma instância do MySQL rodando com as seguintes configurações (definidas em [application.properties](file:///c:/Users/gustavo_hatschbach/Desktop/library/src/main/resources/application.properties)):
+### 1. Database Configuration (MySQL)
+Make sure you have a MySQL instance running with the following settings (defined in [application.properties](file:///c:/Users/gustavo_hatschbach/Desktop/library/src/main/resources/application.properties)):
 
 - **URL:** `jdbc:mysql://localhost:3356/library_jpql`
 - **Username:** `root`
 - **Password:** `mysqlPW`
 
 > [!NOTE]
-> O Spring Boot está configurado com `spring.jpa.hibernate.ddl-auto=update`, o que significa que as tabelas serão geradas automaticamente no banco de dados quando a aplicação for iniciada.
+> Spring Boot is configured with `spring.jpa.hibernate.ddl-auto=update`, which means tables will be automatically generated in the database when the application starts.
 
-### 2. Executando a Aplicação
-No diretório raiz do projeto, execute o comando abaixo para iniciar o servidor Spring Boot:
+### 2. Running the Application
+In the project root directory, run the command below to start the Spring Boot server:
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-O servidor iniciará por padrão na porta **8080** (`http://localhost:8080`).
+The server will start by default on port **8080** (`http://localhost:8080`).
 
 ---
 
-## 🔌 Endpoints da API
+## 🔌 API Endpoints
 
-### Livros (`/livro`)
+### Books (`/livro`)
 
-#### 1. Criar um Livro
-- **Mapeamento:** `POST /livro`
-- **Corpo da Requisição (JSON):**
+#### 1. Create a Book
+- **Mapping:** `POST /livro`
+- **Request Body (JSON):**
   ```json
   {
-    "titulo": "O Senhor dos Anéis",
-    "isbn": "978-8578270698",
+    "titulo": "The Lord of the Rings",
+    "isbn": "978-0261103252",
     "preco": 49.90,
     "dataPublicacao": "1954-07-29",
-    "categoria": "Fantasia",
+    "categoria": "Fantasy",
     "editora": {
       "id": 1
     }
   }
   ```
-- **Resposta Esperada (200 OK):**
+- **Expected Response (200 OK):**
   ```json
   {
     "id": 1,
-    "titulo": "O Senhor dos Anéis",
-    "isbn": "978-8578270698",
+    "titulo": "The Lord of the Rings",
+    "isbn": "978-0261103252",
     "preco": 49.90,
     "dataPublicacao": "1954-07-29",
-    "categoria": "Fantasia",
+    "categoria": "Fantasy",
     "editora": {
       "id": 1,
-      "nome": "Martins Fontes"
+      "nome": "HarperCollins"
     }
   }
   ```
 
-#### 2. Listar Todos os Livros
-- **Mapeamento:** `GET /livro`
-- **Resposta Esperada (200 OK):** Retorna uma lista com todos os livros cadastrados.
+#### 2. List All Books
+- **Mapping:** `GET /livro`
+- **Expected Response (200 OK):** Returns a list containing all registered books.
 
-#### 3. Buscar Livro por Título
-- **Mapeamento:** `GET /livro/{titulo}`
-- **Exemplo:** `GET http://localhost:8080/livro/O Senhor dos Anéis`
-- **Resposta Esperada (200 OK):** Retorna uma lista de livros contendo o título especificado.
+#### 3. Find Book by Title
+- **Mapping:** `GET /livro/{titulo}`
+- **Example:** `GET http://localhost:8080/livro/The Lord of the Rings`
+- **Expected Response (200 OK):** Returns a list of books matching the specified title.
 
 ---
 
-## 📂 Estrutura do Projeto
+## 📂 Project Structure
 
-- `com.weg.library.model`: Entidades JPA (`Livro`, `Autor`, `Editora`).
-- `com.weg.library.repository`: Interfaces Spring Data JPA para comunicação com o banco.
-- `com.weg.library.service`: Regras de negócio da aplicação.
-- `com.weg.library.controller`: Controladores REST expondo os endpoints.
-- `com.weg.library.dto`: Objetos de Transferência de Dados (DTOs) para requisições e respostas.
-- `com.weg.library.mapper`: Mapeadores para converter entidades para DTOs e vice-versa.
+- `com.weg.library.model`: JPA Entities (`Livro`, `Autor`, `Editora`).
+- `com.weg.library.repository`: Spring Data JPA interfaces for database communication.
+- `com.weg.library.service`: Application business logic.
+- `com.weg.library.controller`: REST Controllers exposing the endpoints.
+- `com.weg.library.dto`: Data Transfer Objects (DTOs) for requests and responses.
+- `com.weg.library.mapper`: Mappers to convert entities to DTOs and vice-versa.
