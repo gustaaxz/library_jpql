@@ -1,10 +1,6 @@
 # Library Management API
 
-📄 **System Context Document:**
-
-<object data="./Contexto%20do%20Sistema_%20Gest%C3%A3o%20de%20Biblioteca.pdf" type="application/pdf" width="100%" height="600px">
-    <p>Your browser does not support viewing PDFs directly. You can <a href="./Contexto%20do%20Sistema_%20Gest%C3%A3o%20de%20Biblioteca.pdf">view or download the PDF directly here</a>.</p>
-</object>
+📄 **System Context Document:** [Contexto do Sistema - Gestão de Biblioteca.pdf](./Contexto%20do%20Sistema_%20Gest%C3%A3o%20de%20Biblioteca.pdf)
 
 This is a library management API project developed with **Java 21**, **Spring Boot**, and **Spring Data JPA**, using **MySQL** as the database.
 
