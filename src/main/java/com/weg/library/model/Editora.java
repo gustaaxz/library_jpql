@@ -8,7 +8,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.ArrayList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -31,7 +30,6 @@ public class Editora {
     private Long telefone;
 
     @OneToMany(mappedBy = "editora")
-    @JsonIgnoreProperties("editora")
     private List<Livro> livros = new ArrayList<>();
 
     public Editora(String nome, String cnpj, String email, Long telefone) {

@@ -8,11 +8,13 @@ import org.springframework.stereotype.Service;
 import com.weg.library.dto.livro.LivroRequestDTO;
 import com.weg.library.dto.livro.LivroResponseDTO;
 import com.weg.library.mapper.LivroMapper;
+import com.weg.library.model.Autor;
 import com.weg.library.model.Livro;
 import com.weg.library.projection.LivroMinimoProjection;
 import com.weg.library.dto.editora.EstatisticasEditoraDTO;
 import com.weg.library.repository.LivroRepository;
 import com.weg.library.repository.AutorRepository;
+import com.weg.library.repository.EditoraRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,15 +23,28 @@ import lombok.RequiredArgsConstructor;
 public class LivroService {
     private final LivroRepository repository;
     private final AutorRepository autorRepository;
+    private final EditoraRepository editoraRepository;
     private final LivroMapper mapper;
 
     public LivroResponseDTO postLivro(LivroRequestDTO requestDTO){
         Livro livro = mapper.toEntity(requestDTO);
         
-        // Busca os autores completos no banco para não retornar os nulos do JSON
+        // Se a editora vier com ID, busca do banco para evitar duplicar via CascadeType.PERSIST
+        if (livro.getEditora() != null && livro.getEditora().getId() != null) {
+            livro.setEditora(editoraRepository.findById(livro.getEditora().getId()).orElse(livro.getEditora()));
+        }
+
+        // Busca os autores completos no banco para não retornar os nulos do JSON, ou mantém caso sejam autores novos
         if (livro.getAutores() != null && !livro.getAutores().isEmpty()) {
-            List<Long> autorIds = livro.getAutores().stream().map(a -> a.getId()).toList();
-            livro.setAutores(autorRepository.findAllById(autorIds));
+            List<Autor> autoresFinais = new java.util.ArrayList<>();
+            for (Autor autor : livro.getAutores()) {
+                if (autor.getId() != null) {
+                    autoresFinais.add(autorRepository.findById(autor.getId()).orElse(autor));
+                } else {
+                    autoresFinais.add(autor);
+                }
+            }
+            livro.setAutores(autoresFinais);
         }
 
         livro = repository.save(livro);

@@ -17,7 +17,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Livro {
-    @Id 
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String titulo;
@@ -26,20 +26,16 @@ public class Livro {
     private LocalDate dataPublicacao;
     private String categoria;
 
-    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     @JoinColumn(name = "id_editora")
     private Editora editora;
 
-    @ManyToMany
-    @JoinTable(
-        name = "livro_autores",
-        joinColumns = @JoinColumn(name = "id_livro"),
-        inverseJoinColumns = @JoinColumn(name = "id_autor")
-    )
-
+    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+    @JoinTable(name = "livro_autores", joinColumns = @JoinColumn(name = "id_livro"), inverseJoinColumns = @JoinColumn(name = "id_autor"))
     private List<Autor> autores;
 
-    public Livro(String titulo, String isbn, BigDecimal preco, LocalDate dataPublicacao, String categoria, Editora editora) {
+    public Livro(String titulo, String isbn, BigDecimal preco, LocalDate dataPublicacao, String categoria,
+            Editora editora) {
         this.titulo = titulo;
         this.isbn = isbn;
         this.preco = preco;

@@ -51,10 +51,11 @@ Ajustamos a classe responsável pela conversão para forçar a sincronização d
 
 **Contexto do Erro:**
 Ao resolver o passo 2 (colocar o Livro dentro da lista da Editora), criamos um efeito colateral fatal durante a serialização da resposta pelo Jackson (a biblioteca que transforma os Objetos Java em texto JSON): 
-O Jackson lia o Livro -> Entrava na Editora -> Entrava na Lista de Livros -> Entrava na Editora -> Entrava na Lista de Livros... gerando um Loop Infinito que derrubava a aplicação com `StackOverflowError`.
+O Jackson lia o Livro -> Entrava na Editora -> Entrava na Lista de Livros -> Entrava na Editora -> Entrava na Lista de Livros... gerando um Loop Infinito que derrubava a aplicação com `StackOverflowError`. 
+*(Nota: O mesmo erro aconteceu mais tarde com a relação ManyToMany entre `Livro` e `Autor`, resultando no erro "Document nesting depth (501) exceeds the maximum allowed").*
 
-**Mudança Feita (`Editora.java`):**
-Inicializamos a lista vazia (`new ArrayList<>()`) para evitar NullPointers e aplicamos a anotação `@JsonIgnoreProperties` para "cortar" o ciclo.
+**Mudança Feita (`Editora.java` e `Autor.java`):**
+Inicializamos as listas vazias (`new ArrayList<>()`) para evitar NullPointers e aplicamos a anotação `@JsonIgnoreProperties` para "cortar" o ciclo de ambos os lados.
 
 ```diff
 +import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -130,3 +131,130 @@ Injetamos o `AutorRepository` dentro do serviço de Livros. Antes de salvar o li
 
 **Resultado:**
 A resposta JSON do POST agora traz o Livro recém-criado contendo a listagem com todos os dados preenchidos dos autores associados, tornando o retorno perfeitamente previsível para o front-end.
+
+---
+
+## 6. Criação Dinâmica de Autores via Cascade (Junto com o Livro)
+
+**Contexto da Mudança:**
+Anteriormente, o sistema exigia que os autores já existissem no banco de dados, sendo possível associá-los ao livro apenas fornecendo seus IDs. O objetivo era dar mais flexibilidade à API, permitindo que o usuário envie os dados de um autor que ainda não existe (sem ID) e o sistema se encarregue de criá-lo e vinculá-lo ao livro de uma só vez.
+
+**Mudança Feita (`Livro.java` e `LivroService.java`):**
+Adicionamos o comportamento de cascata `CascadeType.PERSIST` na lista de autores do `Livro.java`. Depois, alteramos a lógica de resgate no `LivroService.java` para ser inteligente: se o objeto de Autor vier com um ID no JSON, ele faz a busca no banco; se vier sem ID (nulo), ele entende que é um autor novo, não faz a busca, e deixa o JPA cuidar de persistir ele no banco por cascata.
+
+```diff
+// Livro.java
+-    @ManyToMany
++    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+     @JoinTable(...)
+     private List<Autor> autores;
+```
+
+```diff
+// LivroService.java
++        if (livro.getAutores() != null && !livro.getAutores().isEmpty()) {
++            List<Autor> autoresFinais = new java.util.ArrayList<>();
++            for (Autor autor : livro.getAutores()) {
++                if (autor.getId() != null) {
++                    autoresFinais.add(autorRepository.findById(autor.getId()).orElse(autor));
++                } else {
++                    autoresFinais.add(autor);
++                }
++            }
++            livro.setAutores(autoresFinais);
++        }
+```
+
+**Resultado:**
+Ao fazer um `POST /livro`, agora é possível enviar arrays de autores mistos. O JPA vinculará ao livro os autores que possuírem `"id"`, enquanto criará novos registros na tabela de Autores para aqueles que enviarem apenas `"nome"` e `"nacionalidade"`.
+
+---
+
+## 7. Exibição de Listas Relacionadas no Objeto de Resposta (ResponseDTO)
+
+**Contexto do Erro:**
+Mesmo após tratar a criação em cascata e o efeito "Stub" dos autores, os dados não estavam sendo exibidos no JSON final retornado pela API. Isso acontece porque no padrão de arquitetura DTO (Data Transfer Object), as requisições (Request) e as respostas (Response) são contratos rígidos separados. O `LivroResponseDTO` não possuía a propriedade `autores`.
+
+**Mudança Feita (`LivroResponseDTO.java` e `LivroMapper.java`):**
+Adicionamos a lista de autores no contrato de resposta e no Mapper.
+
+```diff
+// LivroResponseDTO.java
+public record LivroResponseDTO (
+    // ...
+    String categoria,
+    Editora editora,
++   List<Autor> autores
+){
+```
+
+```diff
+// LivroMapper.java
+        return new LivroResponseDTO(
+            // ...
+            livro.getCategoria(),
+            livro.getEditora(),
++           livro.getAutores()
+        );
+```
+
+**Resultado:**
+A API passa a desenhar perfeitamente o array de `autores` na resposta visual do Postman/Frontend logo após a criação ou listagem do Livro.
+
+---
+
+## 8. Limpeza do JSON de Resposta (Ocultando 'livros' Aninhados)
+
+**Contexto da Mudança:**
+Ao buscar um livro ou logo após criá-lo, o JSON retornado trazia as informações completas da `Editora` e dos `Autores` vinculados. Contudo, como esses objetos possuíam suas próprias listas de livros, o JSON ficava poluído devolvendo os dados do próprio livro em duplicidade dentro das entidades aninhadas (mesmo sem o loop infinito).
+
+**Mudança Feita (`LivroResponseDTO.java` e `LivroMapper.java`):**
+Em vez de utilizar anotações como `@JsonIgnore` nas Entidades de banco (o que prejudicaria outras rotas que pudessem precisar dessas informações), passamos a usar os DTOs específicos de Resposta para a Editora e o Autor (`EditoraResponseDTO` e `AutorResponseDTO`). Como esses DTOs não possuem o atributo `livros` em seu contrato, a lista é naturalmente omitida.
+
+```diff
+// LivroResponseDTO.java
+public record LivroResponseDTO (
+    // ...
+    String categoria,
+-   Editora editora,
++   EditoraResponseDTO editora,
+-   List<Autor> autores
++   List<AutorResponseDTO> autores
+){
+```
+
+```diff
+// LivroMapper.java
+            livro.getCategoria(),
+-           livro.getEditora(),
++           livro.getEditora() != null ? editoraMapper.toResponse(livro.getEditora()) : null,
+-           livro.getAutores()
++           livro.getAutores() != null ? livro.getAutores().stream().map(autorMapper::toResponse).collect(Collectors.toList()) : null
+        );
+```
+
+**Resultado:**
+O JSON da rota de Livros agora fica extremamente limpo e objetivo, mostrando os dados da Editora e dos Autores através de seus DTOs limpos, sem "rebater" de volta a listagem vazia de livros que eles possuem nas entidades originais. O uso de DTOs isola as responsabilidades e evita gambiarras com anotações nas Entidades principais.
+
+---
+
+## 9. Prevenção de Duplicação de Entidades no Cascade (Editora)
+
+**Contexto do Erro:**
+Mesmo após permitir a criação de um Livro associando-o a uma Editora que já existia (passando `"id": 3` no JSON), o JPA acabava ignorando esse ID e criando uma **nova linha idêntica** no banco de dados (ex: `id = 4`). Isso acontecia porque a chave primária da Editora usa a estratégia `@GeneratedValue(strategy = GenerationType.IDENTITY)`. Quando passamos um objeto solto (detached) com ID manual e forçamos o `CascadeType.PERSIST` do Livro sobre ela, o banco ignora o ID manual e insere um registro novo.
+
+**Mudança Feita (`LivroService.java`):**
+Injetamos o `EditoraRepository` no `LivroService`. Agora, antes de chamar o `save()` do Livro, interceptamos o DTO: se a Editora veio com um ID, nós vamos no banco de dados, buscamos a Editora "oficial" que já está lá (managed) e amarramos ela ao Livro. 
+
+```diff
+// LivroService.java
+        Livro livro = mapper.toEntity(requestDTO);
+        
++       // Se a editora vier com ID, busca do banco para evitar duplicar via CascadeType.PERSIST
++       if (livro.getEditora() != null && livro.getEditora().getId() != null) {
++           livro.setEditora(editoraRepository.findById(livro.getEditora().getId()).orElse(livro.getEditora()));
++       }
+```
+
+**Resultado:**
+O comportamento se divide corretamente. Se a requisição contiver apenas os dados da editora (sem ID), o Hibernate a salvará como uma nova editora. Se contiver o `"id"`, ele buscará a editora existente e a reaproveitará para o novo Livro sem gerar registros duplicados (linhas fantasmas) na tabela.

@@ -74,18 +74,23 @@ In addition to the advanced endpoints documented in the **JPQL Queries** section
 - **Request Body (JSON):**
   ```json
   {
-    "titulo": "The Lord of the Rings",
-    "isbn": "978-0261103252",
-    "preco": 49.90,
-    "dataPublicacao": "1954-07-29",
-    "categoria": "Fantasy",
-    "editora": {
-      "id": 1
+    "titulo" : "O Pequeno Príncipe",
+    "isbn" : "895735738",
+    "preco" : 59.90,
+    "dataPublicacao" : "2020-06-02",
+    "categoria" : "Desenho Animado",
+    "editora" : {
+        "nome" : "Disney Productions",
+        "cnpj" : "849478938-00",
+        "email" : "disneyproductions@gmail.com",
+        "telefone" : 47928598473
     },
     "autores": [
-      {
-        "id": 1
-      }
+        {
+            "nome" : "Walt Disney",
+            "nacionalidade" : "EUA, Chicago",
+            "dataNascimento" : "1956-12-12"
+        }
     ]
   }
   ```

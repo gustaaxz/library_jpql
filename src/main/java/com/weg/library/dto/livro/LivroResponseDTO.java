@@ -3,7 +3,9 @@ package com.weg.library.dto.livro;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-import com.weg.library.model.Editora;
+import com.weg.library.dto.editora.EditoraResponseDTO;
+import com.weg.library.dto.autor.AutorResponseDTO;
+import java.util.List;
 
 public record LivroResponseDTO (
     Long id,
@@ -12,7 +14,8 @@ public record LivroResponseDTO (
     BigDecimal preco,
     LocalDate dataPublicacao,
     String categoria,
-    Editora editora
+    EditoraResponseDTO editora,
+    List<AutorResponseDTO> autores
 ){
     
 }

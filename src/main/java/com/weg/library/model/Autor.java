@@ -1,6 +1,7 @@
 package com.weg.library.model;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.persistence.Entity;
@@ -21,7 +22,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Autor {
-    @Id 
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String nome;
@@ -29,7 +30,7 @@ public class Autor {
     private LocalDate dataNascimento;
 
     @ManyToMany(mappedBy = "autores")
-    private List<Livro> livros;
+    private List<Livro> livros = new ArrayList<>();
 
     public Autor(String nome, String nacionalidade, LocalDate dataNascimento) {
         this.nome = nome;
