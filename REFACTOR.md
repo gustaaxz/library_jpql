@@ -258,3 +258,80 @@ Injetamos o `EditoraRepository` no `LivroService`. Agora, antes de chamar o `sav
 
 **Resultado:**
 O comportamento se divide corretamente. Se a requisição contiver apenas os dados da editora (sem ID), o Hibernate a salvará como uma nova editora. Se contiver o `"id"`, ele buscará a editora existente e a reaproveitará para o novo Livro sem gerar registros duplicados (linhas fantasmas) na tabela.
+
+---
+
+## 10. Correção na Busca de Livros Sem ISBN (Strings Vazias vs Nulo)
+
+**Contexto do Erro:**
+A rota `GET /livro/sem-isbn` não estava retornando os livros que foram cadastrados sem o campo ISBN fornecido. Isso acontecia porque o JSON converte campos não informados ou apagados (`"isbn": ""`) em **strings vazias**, que são diferentes do valor nativo de banco de dados **`NULL`**. A nossa query em JPQL estava estritamente validando `WHERE l.isbn IS NULL`.
+
+**Mudança Feita (`LivroRepository.java`):**
+Ajustamos a query JPQL para suportar tanto o valor nativo nulo quanto strings compostas apenas por vazios ou espaços.
+
+```diff
+// LivroRepository.java
+    @Query("""
+            SELECT l
+            FROM Livro l
+-           WHERE l.isbn IS NULL
++           WHERE l.isbn IS NULL OR TRIM(l.isbn) = ''
+            """)
+    List<Livro> buscarLivrosSemIsbn();
+```
+
+**Resultado:**
+Ao buscar por livros sem ISBN na API, o Spring Data JPA irá retornar adequadamente os livros cujo campo no banco de dados não existe ou está preenchido como string em branco, cobrindo as nuances da leitura de dados JSON.
+
+---
+
+## 11. Correção de Duplicações de Entidades no JOIN FETCH
+
+**Contexto do Erro:**
+A rota `GET /livro/com-autores` não estava funcionando perfeitamente devido ao uso do `JOIN FETCH` puro em `buscarLivrosComAutores()`.
+O problema: **Duplicações na Lista.** Se um livro tivesse 3 autores, o banco de dados retornava 3 linhas multiplicadas, e a lista JSON acabava devolvendo o mesmo livro repetido 3 vezes.
+
+**Mudança Feita (`LivroRepository.java`):**
+Ajustamos a query JPQL para utilizar a palavra-chave `DISTINCT`.
+
+```diff
+// LivroRepository.java
+    @Query("""
+-           SELECT l
++           SELECT DISTINCT l
+            FROM Livro l
+            JOIN FETCH l.autores
+            """)
+    List<Livro> buscarLivrosComAutores();
+```
+
+**Resultado:**
+Mantivemos o `JOIN FETCH` (INNER JOIN) para que a rota retorne estritamente os livros que *possuem* autores. Porém, a adição do `DISTINCT` instrui o Hibernate a agrupar a entidade "Livro" raiz na memória do Java, mesclando as linhas multiplicadas numa única ocorrência para o JSON e evitando cópias idênticas.
+
+---
+
+## 12. Reaproveitamento de Editoras (Evitando Clonagem)
+
+**Contexto do Erro:**
+Quando um livro era criado passando as informações completas da Editora (Nome, CNPJ, etc), mas sem informar o seu `id`, o sistema assumia automaticamente que se tratava de uma editora inédita. O `CascadeType.PERSIST` acabava criando uma nova linha na tabela `editora` com um ID diferente, mesmo que a editora (com o mesmo Nome e CNPJ) já existisse, resultando em dados clonados.
+
+**Mudança Feita (`LivroService.java` e `EditoraRepository.java`):**
+Criamos o método `findByCnpj` no repositório para permitir a busca pela identidade real da empresa. Ajustamos o serviço para que, caso o ID não seja enviado no JSON, ele intercepte a criação e faça uma verificação pelo CNPJ.
+
+```diff
+// LivroService.java
+-       if (livro.getEditora() != null && livro.getEditora().getId() != null) {
+-           livro.setEditora(editoraRepository.findById(livro.getEditora().getId()).orElse(livro.getEditora()));
+-       }
++       if (livro.getEditora() != null) {
++           if (livro.getEditora().getId() != null) {
++               livro.setEditora(editoraRepository.findById(livro.getEditora().getId()).orElse(livro.getEditora()));
++           } else if (livro.getEditora().getCnpj() != null && !livro.getEditora().getCnpj().isBlank()) {
++               editoraRepository.findByCnpj(livro.getEditora().getCnpj()).ifPresent(livro::setEditora);
++           }
++       }
+```
+
+**Resultado:**
+Ao enviar um novo livro contendo apenas `"nome": "Disney"` e `"cnpj": "12345"`, o sistema percebe que a editora já existe no banco e reaproveita o registro original na associação, cessando a criação desnecessária de clones.
+

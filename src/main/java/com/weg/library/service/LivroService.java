@@ -29,9 +29,13 @@ public class LivroService {
     public LivroResponseDTO postLivro(LivroRequestDTO requestDTO){
         Livro livro = mapper.toEntity(requestDTO);
         
-        // Se a editora vier com ID, busca do banco para evitar duplicar via CascadeType.PERSIST
-        if (livro.getEditora() != null && livro.getEditora().getId() != null) {
-            livro.setEditora(editoraRepository.findById(livro.getEditora().getId()).orElse(livro.getEditora()));
+        // Se a editora vier com ID, ou com CNPJ, busca do banco para evitar duplicar via CascadeType.PERSIST
+        if (livro.getEditora() != null) {
+            if (livro.getEditora().getId() != null) {
+                livro.setEditora(editoraRepository.findById(livro.getEditora().getId()).orElse(livro.getEditora()));
+            } else if (livro.getEditora().getCnpj() != null && !livro.getEditora().getCnpj().isBlank()) {
+                editoraRepository.findByCnpj(livro.getEditora().getCnpj()).ifPresent(livro::setEditora);
+            }
         }
 
         // Busca os autores completos no banco para não retornar os nulos do JSON, ou mantém caso sejam autores novos
@@ -39,7 +43,8 @@ public class LivroService {
             List<Autor> autoresFinais = new java.util.ArrayList<>();
             for (Autor autor : livro.getAutores()) {
                 if (autor.getId() != null) {
-                    autoresFinais.add(autorRepository.findById(autor.getId()).orElse(autor));
+                    autoresFinais.add(autorRepository.findById(autor.getId())
+                        .orElseThrow(() -> new RuntimeException("Autor com ID " + autor.getId() + " não encontrado no banco de dados.")));
                 } else {
                     autoresFinais.add(autor);
                 }

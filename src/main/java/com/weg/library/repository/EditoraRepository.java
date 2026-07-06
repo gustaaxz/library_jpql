@@ -7,5 +7,5 @@ import com.weg.library.model.Editora;
 
 @Repository
 public interface EditoraRepository extends JpaRepository<Editora, Long>{
-    
+    java.util.Optional<Editora> findByCnpj(String cnpj);
 }

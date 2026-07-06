@@ -47,7 +47,7 @@ public interface LivroRepository extends JpaRepository<Livro, Long>{
     @Query("""
             SELECT l
             FROM Livro l
-            WHERE l.isbn IS NULL
+            WHERE l.isbn IS NULL OR TRIM(l.isbn) = ''
             """)
     List<Livro> buscarLivrosSemIsbn();
 
@@ -83,9 +83,10 @@ public interface LivroRepository extends JpaRepository<Livro, Long>{
     List<Livro> buscarLivrosPorNomeAutor(@Param("nomeAutor") String nomeAutor);
 
     @Query("""
-            SELECT l
+            SELECT DISTINCT l
             FROM Livro l
-            JOIN FETCH l.autores
+            JOIN FETCH l.autores a
+            WHERE a.nome IS NOT NULL AND TRIM(a.nome) != ''
             """)
     List<Livro> buscarLivrosComAutores();
 
@@ -103,27 +104,27 @@ public interface LivroRepository extends JpaRepository<Livro, Long>{
             """)
     List<Livro> buscarLivrosAcimaDaMedia();
 
-    @NativeQuery(value = """
+    @Query(value = """
             SELECT *
             FROM livro
             WHERE YEAR(data_publicacao) = 2023
-            """)
+            """, nativeQuery = true)
     List<Livro> buscarLivrosPorAno2023();
 
-    @NativeQuery(value = """
+    @Query(value = """
             SELECT l.*
             FROM livro l
             JOIN livro_autores la ON l.id = la.id_livro
             JOIN autor a ON a.id = la.id_autor
             WHERE a.nacionalidade = 'Brasileiro'
-            """)
+            """, nativeQuery = true)
     List<Livro> buscarLivrosDeAutoresBrasileirosNative();
 
-    @NativeQuery(value = """
+    @Query(value = """
             SELECT *
             FROM livro
             WHERE LOWER(categoria) = LOWER(:categoria)
-            """)
+            """, nativeQuery = true)
     List<Livro> buscarLivrosPorCategoriaIgnorandoCaixaNative(@Param("categoria") String categoria);
 
     @Query("""
@@ -140,10 +141,10 @@ public interface LivroRepository extends JpaRepository<Livro, Long>{
             """)
     List<EstatisticasEditoraDTO> buscarEstatisticasEditora();
 
-    @Query(value = """
+    @NativeQuery(value = """
             SELECT titulo AS titulo, preco AS preco
             FROM livro
-            """, nativeQuery = true)
+            """)
     List<LivroMinimoProjection> buscarLivrosComProjecaoNativa();
 
     <T> List<T> findByCategoria(String categoria, Class<T> type);
