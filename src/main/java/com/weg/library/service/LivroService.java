@@ -1,5 +1,6 @@
 package com.weg.library.service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -36,6 +37,44 @@ public class LivroService {
         return livros.stream()
                     .map(mapper::toResponse)
                     .toList();
-        
+    }
+
+    public List<LivroResponseDTO> buscarPorCategoriaEPrecoMenorQue(String categoria, BigDecimal preco){
+        List<Livro> livros = repository.buscarPorCategoriaEPrecoMenorQue(categoria, preco);
+        return livros.stream()
+                    .map(mapper::toResponse)
+                    .toList();
+    }
+
+    public List<LivroResponseDTO> buscarPorPrecoEntre(BigDecimal min, BigDecimal max){
+        List<Livro> livros = repository.buscarPorPrecoEntre(min, max);
+        return livros.stream()
+                    .map(mapper::toResponse)
+                    .toList();
+    }
+
+    public List<LivroResponseDTO> buscarPorCategorias(List<String> categorias){
+        List<Livro> livros = repository.buscarPorCategorias(categorias);
+        return livros.stream()
+                    .map(mapper::toResponse)
+                    .toList();
+    }
+
+    public List<LivroResponseDTO> buscarLivrosSemIsbn(){
+        List<Livro> livros = repository.buscarLivrosSemIsbn();
+        return livros.stream()
+                    .map(mapper::toResponse)
+                    .toList();
+    }
+
+    public List<LivroResponseDTO> buscarLivrosPorEditoraOrdenadoPorTitulo(String nomeEditora){
+        List<Livro> livros = repository.buscarLivrosPorEditoraOrdenadoPorTitulo(nomeEditora);
+        return livros.stream()
+                    .map(mapper::toResponse)
+                    .toList();
+    }
+
+    public Long contarLivrosPorNacionalidadeDeAutor(String nacionalidade){
+        return repository.contarLivrosPorNacionalidadeDeAutor(nacionalidade);
     }
 }
