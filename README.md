@@ -13,10 +13,17 @@ The main focus of this repository is to demonstrate the **implementation of comp
 The learning and implementation of the queries were divided into difficulty levels. Each folder below contains detailed step-by-step explanations of how the query was implemented, from the Database (Repository) to the API exposure (Controller).
 
 Access the explanatory guides:
-- 🟢 **[Level 1 - Basic Activities (Queries 1 to 8)](./docs_consultas/Nivel_1)**
-- 🟡 **[Level 2 - Intermediate Activities](./docs_consultas/Nivel_2)**
-- 🟠 **[Level 3 - Advanced Activities](./docs_consultas/Nivel_3)**
-- 🔴 **[Level 4 - Complex Activities](./docs_consultas/Nivel_4)**
+- 🟢 **[Level 1: Derived Query Methods (Padrão Spring Data)](./docs_consultas/Nivel_1)**
+- 🟡 **[Level 2: JPQL (Java Persistence Query Language)](./docs_consultas/Nivel_2)**
+- 🟠 **[Level 3: Native Queries (SQL Puro)](./docs_consultas/Nivel_3)**
+- 🔴 **[Level 4: Projections e DTOs](./docs_consultas/Nivel_4)**
+
+---
+
+## 🛠️ Refactoring & Bug Fixes
+
+Throughout the development of this API, several structural challenges were overcome (such as infinite recursion with Jackson, Many-to-Many cascade saves, and memory synchronization). 
+All of these architectural decisions and bug fixes are detailed in the **[REFACTOR.md](./REFACTOR.md)** file.
 
 ---
 
@@ -74,13 +81,35 @@ In addition to the advanced endpoints documented in the **JPQL Queries** section
     "categoria": "Fantasy",
     "editora": {
       "id": 1
-    }
+    },
+    "autores": [
+      {
+        "id": 1
+      }
+    ]
   }
   ```
 
 #### 2. List All Books
 - **Method:** `GET /livro`
 - **Expected Response:** Returns a JSON Array (list) containing all registered books.
+
+### ✍️ Authors (`/autor`)
+
+#### 1. Register an Author
+- **Method:** `POST /autor`
+- **Request Body (JSON):**
+  ```json
+  {
+    "nome": "J.R.R. Tolkien",
+    "nacionalidade": "British",
+    "dataNascimento": "1892-01-03"
+  }
+  ```
+
+#### 2. List All Authors
+- **Method:** `GET /autor`
+- **Expected Response:** Returns a JSON Array containing all registered authors.
 
 ---
 

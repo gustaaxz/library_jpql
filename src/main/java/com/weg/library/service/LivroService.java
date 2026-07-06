@@ -9,7 +9,10 @@ import com.weg.library.dto.livro.LivroRequestDTO;
 import com.weg.library.dto.livro.LivroResponseDTO;
 import com.weg.library.mapper.LivroMapper;
 import com.weg.library.model.Livro;
+import com.weg.library.projection.LivroMinimoProjection;
+import com.weg.library.dto.editora.EstatisticasEditoraDTO;
 import com.weg.library.repository.LivroRepository;
+import com.weg.library.repository.AutorRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,11 +20,19 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class LivroService {
     private final LivroRepository repository;
+    private final AutorRepository autorRepository;
     private final LivroMapper mapper;
 
     public LivroResponseDTO postLivro(LivroRequestDTO requestDTO){
         Livro livro = mapper.toEntity(requestDTO);
-        repository.save(livro);
+        
+        // Busca os autores completos no banco para não retornar os nulos do JSON
+        if (livro.getAutores() != null && !livro.getAutores().isEmpty()) {
+            List<Long> autorIds = livro.getAutores().stream().map(a -> a.getId()).toList();
+            livro.setAutores(autorRepository.findAllById(autorIds));
+        }
+
+        livro = repository.save(livro);
         return mapper.toResponse(livro);
     }
 
@@ -76,5 +87,67 @@ public class LivroService {
 
     public Long contarLivrosPorNacionalidadeDeAutor(String nacionalidade){
         return repository.contarLivrosPorNacionalidadeDeAutor(nacionalidade);
+    }
+
+    public List<String> buscarTitulosPorCategoria(String categoria){
+        return repository.buscarTitulosPorCategoria(categoria);
+    }
+
+    public List<LivroResponseDTO> buscarLivrosPorNomeAutor(String nomeAutor){
+        List<Livro> livros = repository.buscarLivrosPorNomeAutor(nomeAutor);
+        return livros.stream()
+                    .map(mapper::toResponse)
+                    .toList();
+    }
+
+    public List<LivroResponseDTO> buscarLivrosComAutores(){
+        List<Livro> livros = repository.buscarLivrosComAutores();
+        return livros.stream()
+                    .map(mapper::toResponse)
+                    .toList();
+    }
+
+    public Double calcularMediaPrecoPorEditora(String nomeEditora) {
+        return repository.calcularMediaPrecoPorEditora(nomeEditora);
+    }
+
+    public List<LivroResponseDTO> buscarLivrosAcimaDaMedia() {
+        return repository.buscarLivrosAcimaDaMedia().stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
+
+    public List<LivroResponseDTO> buscarLivrosPorAno2023() {
+        return repository.buscarLivrosPorAno2023().stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
+
+    public List<LivroResponseDTO> buscarLivrosDeAutoresBrasileirosNative() {
+        return repository.buscarLivrosDeAutoresBrasileirosNative().stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
+
+    public List<LivroResponseDTO> buscarLivrosPorCategoriaIgnorandoCaixaNative(String categoria) {
+        return repository.buscarLivrosPorCategoriaIgnorandoCaixaNative(categoria).stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
+
+    public List<LivroMinimoProjection> buscarLivrosComProjecao() {
+        return repository.buscarLivrosComProjecao();
+    }
+
+    public List<EstatisticasEditoraDTO> buscarEstatisticasEditora() {
+        return repository.buscarEstatisticasEditora();
+    }
+
+    public List<LivroMinimoProjection> buscarLivrosComProjecaoNativa() {
+        return repository.buscarLivrosComProjecaoNativa();
+    }
+
+    public <T> List<T> buscarLivrosPorCategoriaComProjecaoDinamica(String categoria, Class<T> type) {
+        return repository.findByCategoria(categoria, type);
     }
 }

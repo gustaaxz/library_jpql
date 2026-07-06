@@ -9,7 +9,7 @@ import com.weg.library.model.Livro;
 @Component
 public class LivroMapper {
     public Livro toEntity(LivroRequestDTO requestDTO){
-        return new Livro(
+        Livro livro = new Livro(
             requestDTO.titulo(),
             requestDTO.isbn(),
             requestDTO.preco(),
@@ -17,6 +17,14 @@ public class LivroMapper {
             requestDTO.categoria(),
             requestDTO.editora()
         );
+        
+        livro.setAutores(requestDTO.autores());
+
+        if (livro.getEditora() != null) {
+            livro.getEditora().getLivros().add(livro);
+        }
+        
+        return livro;
     }
 
     public LivroResponseDTO toResponse(Livro livro){

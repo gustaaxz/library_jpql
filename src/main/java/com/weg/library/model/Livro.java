@@ -26,7 +26,7 @@ public class Livro {
     private LocalDate dataPublicacao;
     private String categoria;
 
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "id_editora")
     private Editora editora;
 
